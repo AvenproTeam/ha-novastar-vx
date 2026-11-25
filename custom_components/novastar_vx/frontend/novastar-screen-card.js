@@ -7,7 +7,7 @@
  *   entry_id: <optional, defaults to the first controller>
  *   title: <optional>
  *   view: front | back          # default front; "back" mirrors the map for work behind the screen
- *   labels: true | false        # default true
+ *   hide_labels: true | false   # default false; hides cabinet names and temperatures
  */
 const LEVEL_LABEL = { ok: "OK", warning: "Check", error: "Fault" };
 const REASON = {
@@ -19,11 +19,62 @@ const REASON = {
 
 class NovaStarScreenCard extends HTMLElement {
   static getStubConfig() {
-    return { view: "front", labels: true };
+    return { view: "front" };
+  }
+
+  // Visual editor (rendered by Home Assistant's built-in form).
+  static getConfigForm() {
+    return {
+      schema: [
+        { name: "entry_id", selector: { config_entry: { integration: "novastar_vx" } } },
+        { name: "title", selector: { text: {} } },
+        {
+          type: "grid",
+          name: "",
+          schema: [
+            {
+              name: "view",
+              selector: {
+                select: {
+                  mode: "dropdown",
+                  options: [
+                    { value: "front", label: "Front" },
+                    { value: "back", label: "Back (mirrored)" },
+                  ],
+                },
+              },
+            },
+            { name: "hide_labels", selector: { boolean: {} } },
+          ],
+        },
+      ],
+      computeLabel: (s) =>
+        ({
+          entry_id: "Controller",
+          title: "Title",
+          view: "Default view",
+          hide_labels: "Hide cabinet names and temperatures",
+        })[s.name],
+      computeHelper: (s) =>
+        s.name === "entry_id" ? "Leave empty to use the first controller." : undefined,
+    };
+  }
+
+  // Sections view: take the full width by default; the map needs the space.
+  getGridOptions() {
+    return { columns: "full", min_columns: 6, rows: "auto" };
   }
 
   setConfig(config) {
-    this._config = { view: "front", labels: true, ...config };
+    const previous = this._config && this._config.entry_id;
+    this._config = { view: "front", ...config };
+    // `labels: false` is the 1.0.0 spelling of `hide_labels: true`.
+    this._labels = !this._config.hide_labels && this._config.labels !== false;
+    if (this._unsub && previous !== this._config.entry_id) {
+      this.disconnectedCallback(); // switch to the newly chosen controller
+      this._data = null;
+      this._subscribe();
+    }
     this._view = this._config.view === "back" ? "back" : "front";
     this._selected = null;
     if (!this.shadowRoot) this.attachShadow({ mode: "open" });
@@ -109,7 +160,7 @@ class NovaStarScreenCard extends HTMLElement {
       const sel = this._selected === card.id ? " selected" : "";
       out += `<g class="cab ${card.level}${sel}" data-id="${this._esc(card.id)}">
         <rect x="${x + unit * 0.03}" y="${y + unit * 0.03}" width="${w - unit * 0.06}" height="${h - unit * 0.06}" rx="${unit * 0.06}"/>`;
-      if (this._config.labels) {
+      if (this._labels) {
         out += `<text x="${x + w / 2}" y="${y + h / 2}" font-size="${font}">${this._esc(card.id)}</text>`;
         if (card.temperature != null) {
           out += `<text class="sub" x="${x + w / 2}" y="${y + h / 2 + font * 1.1}" font-size="${font * 0.75}">${card.temperature}°</text>`;

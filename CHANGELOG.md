@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 – 2026-11-25
+
+- Screen map card: takes the full width by default in Sections views.
+- Screen map card: visual editor (controller, title, default view, hide labels).
+- Screen map card: `hide_labels` replaces `labels` (the old `labels: false` still works).
+
 ## 1.0.0 – 2026-11-25
 
 First release.

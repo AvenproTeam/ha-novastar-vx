@@ -117,14 +117,14 @@ The card is included with the integration and loads automatically. You don't nee
 type: custom:novastar-screen-card
 ```
 
-Or pick **NovaStar screen map** in the card picker. It works best in a **Panel** view or a wide section.
+Or pick **NovaStar screen map** in the card picker; it has a visual editor. In a **Sections** view it takes the full width by default (change it in the card's **Layout** tab). In the classic **Masonry** view cards are limited to one column, so use a **Panel** view there to give the map the whole screen.
 
 | Option | Default | What it does |
 | --- | --- | --- |
 | `entry_id` | first controller | Which controller to show, if you have several. |
 | `title` | controller name | Card title. |
 | `view` | `front` | `back` mirrors the map left-to-right, as seen from behind the screen. You can also switch with the button on the card. |
-| `labels` | `true` | Show cabinet names and temperatures on the map. |
+| `hide_labels` | `false` | Hide cabinet names and temperatures on the map (useful on small screens). |
 
 **Colours**
 
