@@ -1,0 +1,107 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add a NovaStar controller",
+        "description": "Enter the IP address of the controller (for example a VX1000). Home Assistant connects to its control port and scans every output for receiving cards. The cards it finds become the expected layout, so any card that later stops answering is reported as a problem. Nothing is ever written to the controller.",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "For example 192.168.1.50. The port is 5200 unless you changed it."
+        }
+      },
+      "reconfigure": {
+        "title": "Change the controller's address",
+        "description": "Enter the IP address of the controller (for example a VX1000). Home Assistant connects to its control port and scans every output for receiving cards. The cards it finds become the expected layout, so any card that later stops answering is reported as a problem. Nothing is ever written to the controller.",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "For example 192.168.1.50. The port is 5200 unless you changed it."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Can't reach a NovaStar controller at this address.",
+      "no_cards": "Connected, but no receiving cards answered on any output."
+    },
+    "abort": {
+      "already_configured": "This controller is already added.",
+      "reconfigure_successful": "The address was updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "description": "How often to poll, when a card counts as too hot, and which entities to create.",
+        "data": {
+          "scan_interval": "Update interval (seconds)",
+          "temperature_limit": "Card temperature alarm (°C)",
+          "card_entities": "Create entities for every card",
+          "rescan": "Scan the outputs again"
+        },
+        "data_description": {
+          "card_entities": "Turn off on very large screens to keep only the summary entities per output.",
+          "rescan": "Use after you add, remove or re-cable cabinets. The cards found become the new expected layout."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Can't reach a NovaStar controller at this address.",
+      "no_cards": "Connected, but no receiving cards answered on any output."
+    }
+  },
+  "device": {
+    "output": {
+      "name": "{controller} output {output}"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connection": {
+        "name": "Connection"
+      },
+      "screen_problem": {
+        "name": "Screen problem"
+      },
+      "on_backup": {
+        "name": "Running on backup"
+      },
+      "card_problem_any": {
+        "name": "Card problem"
+      },
+      "card_problem": {
+        "name": "Card {card} problem"
+      }
+    },
+    "sensor": {
+      "cards_online": {
+        "name": "Cards online"
+      },
+      "max_temperature": {
+        "name": "Highest card temperature"
+      },
+      "min_voltage": {
+        "name": "Lowest card voltage"
+      },
+      "module_flag": {
+        "name": "Cards with module flag"
+      },
+      "card_temperature": {
+        "name": "Card {card} temperature"
+      },
+      "card_voltage": {
+        "name": "Card {card} voltage"
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Can't read the controller: {error}"
+    }
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Afegeix un controlador NovaStar",
+        "description": "Introdueix l'adreça IP del controlador (per exemple un VX1000). Home Assistant es connecta al seu port de control i busca targetes receptores a cada sortida. Les targetes trobades passen a ser la distribució esperada, de manera que qualsevol targeta que deixi de respondre es marca com a problema. Mai s'escriu res al controlador.",
+        "data": {
+          "host": "Amfitrió",
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "Per exemple 192.168.1.50. El port és el 5200 tret que l'hagis canviat."
+        }
+      },
+      "reconfigure": {
+        "title": "Canvia l'adreça del controlador",
+        "description": "Introdueix l'adreça IP del controlador (per exemple un VX1000). Home Assistant es connecta al seu port de control i busca targetes receptores a cada sortida. Les targetes trobades passen a ser la distribució esperada, de manera que qualsevol targeta que deixi de respondre es marca com a problema. Mai s'escriu res al controlador.",
+        "data": {
+          "host": "Amfitrió",
+          "port": "Port"
+        },
+        "data_description": {
+          "host": "Per exemple 192.168.1.50. El port és el 5200 tret que l'hagis canviat."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No es troba cap controlador NovaStar en aquesta adreça.",
+      "no_cards": "Connectat, però cap targeta receptora ha respost a cap sortida."
+    },
+    "abort": {
+      "already_configured": "Aquest controlador ja està afegit.",
+      "reconfigure_successful": "S'ha actualitzat l'adreça."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opcions",
+        "description": "Cada quant consultar, quan una targeta està massa calenta i quines entitats crear.",
+        "data": {
+          "scan_interval": "Interval d'actualització (segons)",
+          "temperature_limit": "Alarma de temperatura de targeta (°C)",
+          "card_entities": "Crea entitats per a cada targeta",
+          "rescan": "Torna a buscar a les sortides"
+        },
+        "data_description": {
+          "card_entities": "Desactiva-ho en pantalles molt grans per deixar només les entitats de resum per sortida.",
+          "rescan": "Fes-ho servir després d'afegir, treure o recablejar cabines. Les targetes trobades passen a ser la nova distribució esperada."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No es troba cap controlador NovaStar en aquesta adreça.",
+      "no_cards": "Connectat, però cap targeta receptora ha respost a cap sortida."
+    }
+  },
+  "device": {
+    "output": {
+      "name": "{controller} sortida {output}"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connection": {
+        "name": "Connexió"
+      },
+      "screen_problem": {
+        "name": "Problema a la pantalla"
+      },
+      "on_backup": {
+        "name": "Funcionant amb backup"
+      },
+      "card_problem_any": {
+        "name": "Problema a les targetes"
+      },
+      "card_problem": {
+        "name": "Problema targeta {card}"
+      }
+    },
+    "sensor": {
+      "cards_online": {
+        "name": "Targetes en línia"
+      },
+      "max_temperature": {
+        "name": "Temperatura màxima de targeta"
+      },
+      "min_voltage": {
+        "name": "Tensió mínima de targeta"
+      },
+      "module_flag": {
+        "name": "Targetes amb indicador de mòdul"
+      },
+      "card_temperature": {
+        "name": "Temperatura targeta {card}"
+      },
+      "card_voltage": {
+        "name": "Tensió targeta {card}"
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "No es pot llegir el controlador: {error}"
+    }
+  }
+}

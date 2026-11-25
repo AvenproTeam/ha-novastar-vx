@@ -1,0 +1,21 @@
+{
+  "domain": "novastar_vx",
+  "name": "NovaStar LED Controller",
+  "after_dependencies": [
+    "frontend"
+  ],
+  "codeowners": [
+    "@rogerv95"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "http",
+    "websocket_api"
+  ],
+  "documentation": "https://github.com/AvenproTeam/ha-novastar-vx",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/AvenproTeam/ha-novastar-vx/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}

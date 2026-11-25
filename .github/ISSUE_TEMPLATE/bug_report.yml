@@ -1,0 +1,42 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.11.0"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Controller and receiving card models
+      description: Shown in NovaLCT.
+      placeholder: "VX1000 firmware x.y, A8s-X receiving cards"
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Attach the file from "Download diagnostics" on the controller's device page.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Debug logs for custom_components.novastar_vx, if you have them.
+      render: text

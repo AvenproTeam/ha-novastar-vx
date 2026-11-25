@@ -1,0 +1,107 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Añadir un controlador NovaStar",
+        "description": "Introduce la dirección IP del controlador (por ejemplo un VX1000). Home Assistant se conecta a su puerto de control y busca tarjetas receptoras en cada salida. Las tarjetas encontradas pasan a ser la distribución esperada, así que cualquier tarjeta que deje de responder se marca como problema. Nunca se escribe nada en el controlador.",
+        "data": {
+          "host": "Host",
+          "port": "Puerto"
+        },
+        "data_description": {
+          "host": "Por ejemplo 192.168.1.50. El puerto es 5200 salvo que lo hayas cambiado."
+        }
+      },
+      "reconfigure": {
+        "title": "Cambiar la dirección del controlador",
+        "description": "Introduce la dirección IP del controlador (por ejemplo un VX1000). Home Assistant se conecta a su puerto de control y busca tarjetas receptoras en cada salida. Las tarjetas encontradas pasan a ser la distribución esperada, así que cualquier tarjeta que deje de responder se marca como problema. Nunca se escribe nada en el controlador.",
+        "data": {
+          "host": "Host",
+          "port": "Puerto"
+        },
+        "data_description": {
+          "host": "Por ejemplo 192.168.1.50. El puerto es 5200 salvo que lo hayas cambiado."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No se encuentra ningún controlador NovaStar en esta dirección.",
+      "no_cards": "Conectado, pero ninguna tarjeta receptora ha respondido en ninguna salida."
+    },
+    "abort": {
+      "already_configured": "Este controlador ya está añadido.",
+      "reconfigure_successful": "Se ha actualizado la dirección."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones",
+        "description": "Cada cuánto consultar, cuándo una tarjeta está demasiado caliente y qué entidades crear.",
+        "data": {
+          "scan_interval": "Intervalo de actualización (segundos)",
+          "temperature_limit": "Alarma de temperatura de tarjeta (°C)",
+          "card_entities": "Crear entidades para cada tarjeta",
+          "rescan": "Volver a buscar en las salidas"
+        },
+        "data_description": {
+          "card_entities": "Desactívalo en pantallas muy grandes para dejar solo las entidades de resumen por salida.",
+          "rescan": "Úsalo después de añadir, quitar o recablear cabinas. Las tarjetas encontradas pasan a ser la nueva distribución esperada."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No se encuentra ningún controlador NovaStar en esta dirección.",
+      "no_cards": "Conectado, pero ninguna tarjeta receptora ha respondido en ninguna salida."
+    }
+  },
+  "device": {
+    "output": {
+      "name": "{controller} salida {output}"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connection": {
+        "name": "Conexión"
+      },
+      "screen_problem": {
+        "name": "Problema en la pantalla"
+      },
+      "on_backup": {
+        "name": "Funcionando con backup"
+      },
+      "card_problem_any": {
+        "name": "Problema en tarjetas"
+      },
+      "card_problem": {
+        "name": "Problema tarjeta {card}"
+      }
+    },
+    "sensor": {
+      "cards_online": {
+        "name": "Tarjetas en línea"
+      },
+      "max_temperature": {
+        "name": "Temperatura máxima de tarjeta"
+      },
+      "min_voltage": {
+        "name": "Tensión mínima de tarjeta"
+      },
+      "module_flag": {
+        "name": "Tarjetas con indicador de módulo"
+      },
+      "card_temperature": {
+        "name": "Temperatura tarjeta {card}"
+      },
+      "card_voltage": {
+        "name": "Tensión tarjeta {card}"
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "No se puede leer el controlador: {error}"
+    }
+  }
+}
