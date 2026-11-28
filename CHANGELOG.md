@@ -1,10 +1,11 @@
 # Changelog
 
-## 1.1.0 – Unreleased
+## 1.1.0 – 2026-11-28
 
 - **Control** (new, off by default; turn on "Allow control" in the options): input source, display mode (normal / freeze / black) with freeze and black-out switches, brightness (0–100 %), picture in picture and front-panel lock. Commands come from NovaStar's own VX4S protocol sheet and are **untested on a real VX1000**.
 - Control entities show the value read back from the controller on each poll. Nothing is written until you use one of them.
 - Diagnostics include the raw control register values.
+- New icon: the NovaStar logo.
 
 ## 1.0.1 – 2026-11-25
 
