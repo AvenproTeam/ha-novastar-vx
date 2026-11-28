@@ -6,11 +6,16 @@ import asyncio
 import struct
 
 from custom_components.novastar_vx.protocol import (
+    ADDR_CARD_BRIGHTNESS,
     ADDR_MODEL_ID,
     ADDR_SCANNER_ALL_MONITOR,
     ADDR_SCANNER_SIZE,
     ADDR_SENDER_BACKUP_TABLE,
     ADDR_SENDER_CARD_POSITION,
+    ADDR_SENDER_DISPLAY_MODE,
+    ADDR_SENDER_INPUT_SOURCE,
+    ADDR_SENDER_PANEL_LOCK,
+    ADDR_SENDER_PIP,
     ADDR_SENDER_PORT_AREA,
     ADDR_SENDER_REDUNDANT_STATE,
     checksum,
@@ -33,6 +38,17 @@ class FakeController:
         self.monitor: dict[tuple[int, int], bytes] = {}
         self.redundant_state = REDUNDANT_STATE
         self.backup_answers = False
+        # Control registers (DVI input, normal picture, PIP off, panel unlocked).
+        self.control = {
+            ADDR_SENDER_INPUT_SOURCE: b"\x10",
+            ADDR_SENDER_DISPLAY_MODE: b"\x00",
+            ADDR_SENDER_PIP: b"\x00",
+            ADDR_SENDER_PANEL_LOCK: b"\x00",
+        }
+        self.brightness = b"\xff"
+        self.reject_writes = False
+        # Every write received: (devtype, port, card, address, data, destination).
+        self.writes: list[tuple[int, int, int, int, bytes, int]] = []
         self.server: asyncio.Server | None = None
         self.port = 0
         self._writers: set[asyncio.StreamWriter] = set()
@@ -53,6 +69,7 @@ class FakeController:
                 ADDR_MODEL_ID: b"\x0c\x62",
                 ADDR_SENDER_BACKUP_TABLE: BACKUP_TABLE,
                 ADDR_SENDER_REDUNDANT_STATE: self.redundant_state,
+                **self.control,
             }.get(addr)
         main = port - 2 if self.backup_answers and port in (2, 3) else port
         if card >= self.cards.get(main, 0):
@@ -63,21 +80,46 @@ class FakeController:
             return struct.pack("<HH", 100, 100)
         if addr == ADDR_SCANNER_ALL_MONITOR:
             return self.monitor.get((main, card), MONITOR_OK)
+        if addr == ADDR_CARD_BRIGHTNESS:
+            return self.brightness
         return None
+
+    def write(self, devtype: int, port: int, card: int, addr: int, data: bytes, dst: int) -> bool:
+        """Apply a write. Returns whether it is acknowledged."""
+        self.writes.append((devtype, port, card, addr, data, dst))
+        if self.reject_writes:
+            return False
+        if devtype == 0 and addr in self.control:
+            self.control[addr] = data
+        elif devtype == 1 and addr == ADDR_CARD_BRIGHTNESS:
+            self.brightness = data
+        else:
+            return False
+        return True
 
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         self._writers.add(writer)
         try:
             while True:
-                req = await reader.readexactly(20)
+                req = await reader.readexactly(18)
                 assert req[:2] == b"\x55\xaa"
-                assert struct.unpack("<H", req[18:20])[0] == checksum(req[2:18])
-                serial, devtype, port = req[3], req[6], req[7]
+                serial, dst, devtype, port = req[3], req[5], req[6], req[7]
                 card = struct.unpack("<H", req[8:10])[0]
+                code = req[10]
                 addr, length = struct.unpack("<IH", req[12:18])
-                data = self.register(devtype, port, card, addr)
-                ack = 0 if data is not None else 1
-                data = (data or b"")[:length] if ack == 0 else b""
+                if code == 1:  # a write carries its data after the header
+                    req += await reader.readexactly(length + 2)
+                    payload = req[18 : 18 + length]
+                    assert struct.unpack("<H", req[-2:])[0] == checksum(req[2:-2])
+                    ack = 0 if self.write(devtype, port, card, addr, payload, dst) else 1
+                    data = b""
+                    length = 0
+                else:
+                    req += await reader.readexactly(2)
+                    assert struct.unpack("<H", req[18:20])[0] == checksum(req[2:18])
+                    data = self.register(devtype, port, card, addr)
+                    ack = 0 if data is not None else 1
+                    data = (data or b"")[:length] if ack == 0 else b""
                 body = (
                     bytes([ack, serial, 0x00, 0xFE, devtype, port])
                     + struct.pack("<H", card)

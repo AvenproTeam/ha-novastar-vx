@@ -12,7 +12,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/AvenproTeam/ha-novastar-vx" alt="License"></a>
 </p>
 
-Monitor an LED video wall driven by a **NovaStar** controller (such as the **VX1000**) from Home Assistant. You can see every receiving card (cabinet) and its temperature and voltage, find out at once when a cabinet stops answering, and know when an output has switched to its backup cable. A live **screen map** shows each cabinet where it physically sits, coloured green, yellow or red, so a technician can walk straight to the faulty one.
+Monitor, and optionally control, an LED video wall driven by a **NovaStar** controller (such as the **VX1000**) from Home Assistant. You can see every receiving card (cabinet) and its temperature and voltage, find out at once when a cabinet stops answering, and know when an output has switched to its backup cable. A live **screen map** shows each cabinet where it physically sits, coloured green, yellow or red, so a technician can walk straight to the faulty one.
 
 Made and maintained by [Avenpro](https://github.com/AvenproTeam) and shared with the community.
 
@@ -23,7 +23,8 @@ Made and maintained by [Avenpro](https://github.com/AvenproTeam) and shared with
 ## Features
 
 - **Set up from the UI.** You only need the controller's IP address. Each Ethernet output and the cards behind it are found automatically.
-- **Read-only and local.** It talks straight to the controller over your network, the same way NovaLCT does. No cloud, no account, and it never changes a setting.
+- **Local, and read-only unless you say otherwise.** It talks straight to the controller over your network, the same way NovaLCT does. No cloud, no account. Out of the box it only reads; the [control entities](#control) (input, freeze, black, brightness…) don't exist until you turn on **Allow control**.
+- **Control (optional).** Switch the video input, freeze the image, go to black, set the brightness, toggle picture in picture and lock the front panel. Experimental: see [Control](#control).
 - **Every cabinet monitored.** Temperature, voltage and online status for each receiving card, plus summaries per output and for the whole screen.
 - **Instant fault detection.** A cabinet that stops answering (no power, broken data cable, failed card) or overheats raises a problem right away. The attributes name the exact cabinet.
 - **Backup awareness.** If your outputs have backups (redundancy), a sensor tells you when an output has switched to its backup path.
@@ -82,7 +83,7 @@ You get one device for the controller and one device per Ethernet output.
 
 | Where | What |
 | --- | --- |
-| **Configure** on the integration entry | Update interval (10–3600 s, default 30 s). Card temperature alarm (default 70 °C). Whether to create entities for every card. **Scan the outputs again**: use after adding, removing or re-cabling cabinets. |
+| **Configure** on the integration entry | Update interval (10–3600 s, default 30 s). Card temperature alarm (default 70 °C). Whether to create entities for every card. **Allow control**: creates the [control entities](#control) (off by default). **Scan the outputs again**: use after adding, removing or re-cabling cabinets. |
 | **Reconfigure** on the integration entry | Change the controller's address. The outputs are scanned again. |
 
 ## Entities
@@ -137,13 +138,49 @@ Or pick **NovaStar screen map** in the card picker; it has a visual editor. In a
 
 Cabinet positions come from the screen configuration stored in the controller (made with NovaLCT). If the controller doesn't report them, the card falls back to one row per output in chain order and tells you so.
 
+## Control
+
+> **Experimental.** The commands come from NovaStar's own *VX4S Command Protocol* sheet, which is the closest public documentation for the VX family. The VX1000 isn't named in it, so **none of this has been tested on a real VX1000 yet**. Try it with the screen in a safe state before relying on it at a show.
+
+Control is **off by default**, so a freshly updated installation still never writes anything. To use it, open **Configure** on the integration entry and turn on **Allow control**. The entities below then appear on the controller device. Turn it off again and they are removed.
+
+| Entity | Type | What it does |
+| --- | --- | --- |
+| Input source | Select | DVI, HDMI, VGA 1/2, CVBS 1/2, SDI, DisplayPort. Which of these your unit really has depends on the model. |
+| Display mode | Select | `normal`, `freeze` (holds the last picture) or `black`. |
+| Freeze image, Black out | Switch | Shortcuts for the display mode, handy for dashboards and automations. Turning one off returns to normal, but only if the screen is still in that mode. |
+| Brightness | Number (0–100 %) | Sets every receiving card at once. The value shown is read from the first card. |
+| Picture in picture | Switch | Turns PIP on or off. |
+| Lock front panel | Switch (config) | Disables or enables the controller's LCD and buttons. |
+
+Each entity shows the value read back from the controller on every poll, so changes made from the front panel or NovaLCT show up too. After you send a command the entity updates at once, and the next poll corrects it if the controller didn't apply it. The **raw** attribute of the selects shows the register value, which helps when checking another model.
+
+```yaml
+action: select.select_option
+target:
+  entity_id: select.novastar_vx1000_input_source
+data:
+  option: hdmi
+```
+
+```yaml
+action: switch.turn_on
+target:
+  entity_id: switch.novastar_vx1000_black_out
+```
+
+### What isn't available
+
+The public documentation covers only the commands above. There is **no documented command for the fade (cross-fade) time, presets or layers**, so they aren't offered. If you know the register for one of these on your model, a capture from NovaLCT or V-Can in an [issue](https://github.com/AvenproTeam/ha-novastar-vx/issues) would let us add it.
+
 ## How it works, and what to expect
 
-NovaStar controllers have no public API. NovaLCT talks to them over TCP port 5200 using a binary register protocol, and this integration sends the same read requests. Each poll reads:
+NovaStar controllers have no official public API. NovaLCT talks to them over TCP port 5200 using a binary register protocol, and this integration sends the same requests: reads for monitoring, and writes only for the optional [control](#control) entities. Each poll reads:
 
 - the controller's model and its backup (redundancy) table,
 - the monitoring block of every expected receiving card (temperature, voltage, status),
-- every 10 minutes, the screen layout (where each output and cabinet sits).
+- every 10 minutes, the screen layout (where each output and cabinet sits),
+- with control allowed, the input source, display mode, brightness, PIP and panel-lock registers.
 
 A full poll of 144 cards takes about 4 seconds, so the default 30 s interval is comfortable. Very large walls may want 60 s.
 
@@ -230,11 +267,11 @@ Bug reports, captures from other controller models, translations and pull reques
 
 ## Credits
 
-The register addresses come from [sarakusha/novastar](https://github.com/sarakusha/novastar) (MIT), a reverse-engineered NovaStar library. Many thanks to its author.
+The register addresses come from [sarakusha/novastar](https://github.com/sarakusha/novastar) (MIT), a reverse-engineered NovaStar library. The control commands come from the NovaStar protocol sheets published in that repository's `doc` folder. Many thanks to its author.
 
 ## Disclaimer
 
-This is a community project. It is not made, endorsed or supported by Xi'an NovaStar Tech Co., Ltd. NovaStar, VX1000, NovaLCT and related names are trademarks of their owner and are used here only to identify the products this integration works with. The integration only reads data, but you use it at your own risk.
+This is a community project. It is not made, endorsed or supported by Xi'an NovaStar Tech Co., Ltd. NovaStar, VX1000, NovaLCT and related names are trademarks of their owner and are used here only to identify the products this integration works with. By default the integration only reads data; the optional control entities change the controller's settings. Test them on your own equipment first. You use it at your own risk.
 
 ## License
 

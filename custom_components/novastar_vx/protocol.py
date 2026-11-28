@@ -10,17 +10,28 @@ checksum = (sum of every byte after the 55 AA header + 0x5555) & 0xFFFF.
 Replies start with AA 55 and have the same layout; ack == 0 means success.
 
 This module only depends on the standard library, so it can be used and
-tested on its own. It only ever sends read requests.
+tested on its own.
+
+Monitoring only ever sends read requests. Write requests (``build_write`` and
+the ``set_*`` methods of ``NovaClient``) are used only by the control entities,
+which exist only when the user turns on "Allow control" in the options.
 """
 
 from __future__ import annotations
 
 import asyncio
 import struct
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 DEV_SENDER = 0x00
 DEV_RECEIVER = 0x01
+
+# Destination byte of a frame: the sender itself, or every device ("broadcast").
+DST_SENDER = 0x00
+DST_BROADCAST = 0xFF
+PORT_ALL = 0xFF
+CARD_ALL = 0xFFFF
 
 # Register addresses, from the NovaLCT address map.
 ADDR_MODEL_ID = 0x0000_0002
@@ -33,6 +44,28 @@ PORT_AREA_STRIDE = 9
 ADDR_SENDER_CARD_POSITION = 0x0300_0000  # per output block of (x, y) u16 pairs
 CARD_POSITION_STRIDE = 0x1000
 ADDR_SCANNER_SIZE = 0x0200_0017  # width, height (u16) of the area a card drives
+
+# Control registers, from NovaStar's own "VX4S Command Protocol" sheet (the
+# input switching documents in the sarakusha/novastar repository). The VX1000
+# belongs to the same family but is not named in that sheet, so every one of
+# these is unverified on a VX1000 until tested on a real unit.
+ADDR_SENDER_INPUT_SOURCE = 0x0220_002D  # one byte, see INPUT_SOURCES
+ADDR_SENDER_DISPLAY_MODE = 0x0220_0050  # one byte, see DISPLAY_MODES
+ADDR_SENDER_PIP = 0x0220_0030  # 0 off, 1 on
+ADDR_SENDER_PANEL_LOCK = 0x0220_00F7  # 0 LCD and buttons enabled, 1 disabled
+ADDR_CARD_BRIGHTNESS = 0x0200_0001  # global brightness of a receiving card, 0-255
+
+INPUT_SOURCES = {
+    "dvi": 0x10,
+    "hdmi": 0xA0,
+    "vga1": 0x01,
+    "vga2": 0x02,
+    "cvbs1": 0x71,
+    "cvbs2": 0x72,
+    "sdi": 0x40,
+    "dp": 0x90,
+}
+DISPLAY_MODES = {"normal": 0x00, "freeze": 0x01, "black": 0x02}
 
 MAX_PORTS = 16
 MAX_CARDS_PER_PORT = 256
@@ -49,15 +82,43 @@ def checksum(body: bytes) -> int:
     return (sum(body) + 0x5555) & 0xFFFF
 
 
-def build_read(serial: int, devtype: int, port: int, card: int, addr: int, length: int) -> bytes:
-    """Build a read request frame."""
+def _frame(
+    code: int,
+    serial: int,
+    dst: int,
+    devtype: int,
+    port: int,
+    card: int,
+    addr: int,
+    length: int,
+    data: bytes = b"",
+) -> bytes:
     body = (
-        bytes([0x00, serial & 0xFF, 0xFE, 0x00, devtype, port])
+        bytes([0x00, serial & 0xFF, 0xFE, dst, devtype, port])
         + struct.pack("<H", card)
-        + bytes([0x00, 0x00])
+        + bytes([code, 0x00])
         + struct.pack("<IH", addr, length)
+        + data
     )
     return b"\x55\xaa" + body + struct.pack("<H", checksum(body))
+
+
+def build_read(serial: int, devtype: int, port: int, card: int, addr: int, length: int) -> bytes:
+    """Build a read request frame."""
+    return _frame(0x00, serial, DST_SENDER, devtype, port, card, addr, length)
+
+
+def build_write(
+    serial: int,
+    devtype: int,
+    port: int,
+    card: int,
+    addr: int,
+    data: bytes,
+    dst: int = DST_SENDER,
+) -> bytes:
+    """Build a write request frame. Only the control entities use this."""
+    return _frame(0x01, serial, dst, devtype, port, card, addr, len(data), data)
 
 
 def model_name(model_id: int | None) -> str:
@@ -108,6 +169,17 @@ class ScreenGeometry:
 
 
 @dataclass
+class ControlState:
+    """Raw values of the control registers. None means "no answer"."""
+
+    input_source: int | None = None
+    display_mode: int | None = None
+    brightness: int | None = None  # 0-255, read from the first receiving card
+    pip: int | None = None
+    panel_lock: int | None = None
+
+
+@dataclass
 class ControllerStatus:
     """Result of one poll."""
 
@@ -116,6 +188,7 @@ class ControllerStatus:
     redundant_state: dict[int, int] = field(default_factory=dict)
     backup_port_responding: dict[int, bool] = field(default_factory=dict)
     cards: dict[tuple[int, int], CardStatus] = field(default_factory=dict)
+    control: ControlState | None = None  # only read when control is allowed
 
 
 def decode_monitor(port: int, index: int, data: bytes) -> CardStatus:
@@ -204,31 +277,104 @@ class NovaClient:
             rest = await self._reader.readexactly(length + 2)
             return b"\xaa\x55" + head + rest
 
-    async def read(
-        self, devtype: int, port: int, card: int, addr: int, length: int
-    ) -> bytes | None:
-        """Read a register block. Returns None when the device has no answer."""
+    async def _transact(self, build: Callable[[int], bytes]) -> bytes | None:
+        """Send the frame built for the next serial number and return the matching reply.
+
+        Returns None when nothing answers in time.
+        """
         async with self._lock:
             await self.connect()
             assert self._writer is not None
             self._serial = (self._serial + 1) & 0xFF
             serial = self._serial
             try:
-                self._writer.write(build_read(serial, devtype, port, card, addr, length))
+                self._writer.write(build(serial))
                 await self._writer.drain()
                 while True:
                     frame = await asyncio.wait_for(self._read_frame(), self.timeout)
                     if frame[3] == serial:
-                        break  # skip late replies to earlier requests
+                        return frame  # anything else is a late reply to an earlier request
             except TimeoutError:
                 return None
             except (OSError, asyncio.IncompleteReadError) as err:
                 await self.close()
                 raise NovaError(f"Connection lost: {err}") from err
-        if frame[2] != 0:
+
+    async def read(
+        self, devtype: int, port: int, card: int, addr: int, length: int
+    ) -> bytes | None:
+        """Read a register block. Returns None when the device has no answer."""
+        frame = await self._transact(
+            lambda serial: build_read(serial, devtype, port, card, addr, length)
+        )
+        if frame is None or frame[2] != 0:
             return None
         size = struct.unpack("<H", frame[16:18])[0]
         return frame[18 : 18 + size]
+
+    async def write(
+        self,
+        devtype: int,
+        port: int,
+        card: int,
+        addr: int,
+        data: bytes,
+        dst: int = DST_SENDER,
+    ) -> None:
+        """Write a register block. Raises NovaError unless the device acknowledges it."""
+        frame = await self._transact(
+            lambda serial: build_write(serial, devtype, port, card, addr, data, dst)
+        )
+        if frame is None:
+            raise NovaError(f"No acknowledgement writing 0x{addr:08X}")
+        if frame[2] != 0:
+            raise NovaError(f"The controller refused the write to 0x{addr:08X} (code {frame[2]})")
+
+    async def set_input_source(self, source: str) -> None:
+        """Select the video input (a key of INPUT_SOURCES)."""
+        await self.write(DEV_SENDER, 0, 0, ADDR_SENDER_INPUT_SOURCE, bytes([INPUT_SOURCES[source]]))
+
+    async def set_display_mode(self, mode: str) -> None:
+        """Show the picture, freeze it or go black (a key of DISPLAY_MODES)."""
+        await self.write(DEV_SENDER, 0, 0, ADDR_SENDER_DISPLAY_MODE, bytes([DISPLAY_MODES[mode]]))
+
+    async def set_pip(self, on: bool) -> None:
+        """Turn picture-in-picture on or off."""
+        await self.write(DEV_SENDER, 0, 0, ADDR_SENDER_PIP, bytes([on]), dst=DST_BROADCAST)
+
+    async def set_panel_lock(self, locked: bool) -> None:
+        """Disable (True) or enable (False) the controller's LCD and buttons."""
+        await self.write(DEV_SENDER, 0, 0, ADDR_SENDER_PANEL_LOCK, bytes([locked]))
+
+    async def set_brightness(self, value: int) -> None:
+        """Set the brightness (0-255) of every receiving card at once."""
+        if not 0 <= value <= 255:
+            raise ValueError("brightness must be 0-255")
+        await self.write(
+            DEV_RECEIVER,
+            PORT_ALL,
+            CARD_ALL,
+            ADDR_CARD_BRIGHTNESS,
+            bytes([value]),
+            dst=DST_BROADCAST,
+        )
+
+    async def read_control(self, layout: dict[int, int]) -> ControlState:
+        """Read back the control registers. Registers that don't answer stay None."""
+
+        async def byte(devtype: int, port: int, card: int, addr: int) -> int | None:
+            data = await self.read(devtype, port, card, addr, 1)
+            return data[0] if data else None
+
+        state = ControlState(
+            input_source=await byte(DEV_SENDER, 0, 0, ADDR_SENDER_INPUT_SOURCE),
+            display_mode=await byte(DEV_SENDER, 0, 0, ADDR_SENDER_DISPLAY_MODE),
+            pip=await byte(DEV_SENDER, 0, 0, ADDR_SENDER_PIP),
+            panel_lock=await byte(DEV_SENDER, 0, 0, ADDR_SENDER_PANEL_LOCK),
+        )
+        if layout:
+            state.brightness = await byte(DEV_RECEIVER, min(layout), 0, ADDR_CARD_BRIGHTNESS)
+        return state
 
     async def read_model_id(self) -> int:
         """Read the controller's model id."""
@@ -305,8 +451,11 @@ class NovaClient:
         height = max(r.y + r.height for r in [*ports.values(), *cards.values()])
         return ScreenGeometry(width, height, ports, cards)
 
-    async def poll(self, layout: dict[int, int]) -> ControllerStatus:
-        """Read the controller, its redundancy state and every expected card."""
+    async def poll(self, layout: dict[int, int], control: bool = False) -> ControllerStatus:
+        """Read the controller, its redundancy state and every expected card.
+
+        With ``control`` it also reads back the control registers.
+        """
         status = ControllerStatus(model_id=await self.read_model_id())
         table = await self.read(DEV_SENDER, 0, 0, ADDR_SENDER_BACKUP_TABLE, 64)
         status.redundancy = decode_redundancy(table or b"")
@@ -320,4 +469,6 @@ class NovaClient:
         for port, count in layout.items():
             for index in range(count):
                 status.cards[(port, index)] = await self.read_card(port, index)
+        if control:
+            status.control = await self.read_control(layout)
         return status

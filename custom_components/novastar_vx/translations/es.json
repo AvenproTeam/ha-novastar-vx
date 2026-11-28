@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Añadir un controlador NovaStar",
-        "description": "Introduce la dirección IP del controlador (por ejemplo un VX1000). Home Assistant se conecta a su puerto de control y busca tarjetas receptoras en cada salida. Las tarjetas encontradas pasan a ser la distribución esperada, así que cualquier tarjeta que deje de responder se marca como problema. Nunca se escribe nada en el controlador.",
+        "description": "Introduce la dirección IP del controlador (por ejemplo un VX1000). Home Assistant se conecta a su puerto de control y busca tarjetas receptoras en cada salida. Las tarjetas encontradas pasan a ser la distribución esperada, así que cualquier tarjeta que deje de responder se marca como problema. No se escribe nada en el controlador salvo que actives el control en las opciones.",
         "data": {
           "host": "Host",
           "port": "Puerto"
@@ -14,7 +14,7 @@
       },
       "reconfigure": {
         "title": "Cambiar la dirección del controlador",
-        "description": "Introduce la dirección IP del controlador (por ejemplo un VX1000). Home Assistant se conecta a su puerto de control y busca tarjetas receptoras en cada salida. Las tarjetas encontradas pasan a ser la distribución esperada, así que cualquier tarjeta que deje de responder se marca como problema. Nunca se escribe nada en el controlador.",
+        "description": "Introduce la dirección IP del controlador (por ejemplo un VX1000). Home Assistant se conecta a su puerto de control y busca tarjetas receptoras en cada salida. Las tarjetas encontradas pasan a ser la distribución esperada, así que cualquier tarjeta que deje de responder se marca como problema. No se escribe nada en el controlador salvo que actives el control en las opciones.",
         "data": {
           "host": "Host",
           "port": "Puerto"
@@ -42,11 +42,13 @@
           "scan_interval": "Intervalo de actualización (segundos)",
           "temperature_limit": "Alarma de temperatura de tarjeta (°C)",
           "card_entities": "Crear entidades para cada tarjeta",
-          "rescan": "Volver a buscar en las salidas"
+          "rescan": "Volver a buscar en las salidas",
+          "allow_control": "Permitir control (entrada, congelar, negro, brillo…)"
         },
         "data_description": {
           "card_entities": "Desactívalo en pantallas muy grandes para dejar solo las entidades de resumen por salida.",
-          "rescan": "Úsalo después de añadir, quitar o recablear cabinas. Las tarjetas encontradas pasan a ser la nueva distribución esperada."
+          "rescan": "Úsalo después de añadir, quitar o recablear cabinas. Las tarjetas encontradas pasan a ser la nueva distribución esperada.",
+          "allow_control": "Crea entidades que cambian la configuración del controlador. Desactivado por defecto: no se puede escribir nada en el controlador hasta que lo actives."
         }
       }
     },
@@ -97,11 +99,55 @@
       "card_voltage": {
         "name": "Tensión tarjeta {card}"
       }
+    },
+    "select": {
+      "input_source": {
+        "name": "Entrada de vídeo",
+        "state": {
+          "dvi": "DVI",
+          "hdmi": "HDMI",
+          "vga1": "VGA 1",
+          "vga2": "VGA 2",
+          "cvbs1": "CVBS 1",
+          "cvbs2": "CVBS 2",
+          "sdi": "SDI",
+          "dp": "DisplayPort"
+        }
+      },
+      "display_mode": {
+        "name": "Modo de imagen",
+        "state": {
+          "normal": "Normal",
+          "freeze": "Congelada",
+          "black": "Negro"
+        }
+      }
+    },
+    "switch": {
+      "freeze": {
+        "name": "Congelar imagen"
+      },
+      "black": {
+        "name": "Pasar a negro"
+      },
+      "pip": {
+        "name": "Imagen en imagen"
+      },
+      "panel_lock": {
+        "name": "Bloquear panel frontal"
+      }
+    },
+    "number": {
+      "brightness": {
+        "name": "Brillo"
+      }
     }
   },
   "exceptions": {
     "cannot_connect": {
       "message": "No se puede leer el controlador: {error}"
-    }
+    },
+    "control_disabled": "El control está desactivado. Activa «Permitir control» en las opciones de la integración.",
+    "control_failed": "El controlador no aceptó el comando: {error}"
   }
 }

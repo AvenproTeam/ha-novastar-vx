@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Add a NovaStar controller",
-        "description": "Enter the IP address of the controller (for example a VX1000). Home Assistant connects to its control port and scans every output for receiving cards. The cards it finds become the expected layout, so any card that later stops answering is reported as a problem. Nothing is ever written to the controller.",
+        "description": "Enter the IP address of the controller (for example a VX1000). Home Assistant connects to its control port and scans every output for receiving cards. The cards it finds become the expected layout, so any card that later stops answering is reported as a problem. Nothing is written to the controller unless you turn on control in the options.",
         "data": {
           "host": "Host",
           "port": "Port"
@@ -14,7 +14,7 @@
       },
       "reconfigure": {
         "title": "Change the controller's address",
-        "description": "Enter the IP address of the controller (for example a VX1000). Home Assistant connects to its control port and scans every output for receiving cards. The cards it finds become the expected layout, so any card that later stops answering is reported as a problem. Nothing is ever written to the controller.",
+        "description": "Enter the IP address of the controller (for example a VX1000). Home Assistant connects to its control port and scans every output for receiving cards. The cards it finds become the expected layout, so any card that later stops answering is reported as a problem. Nothing is written to the controller unless you turn on control in the options.",
         "data": {
           "host": "Host",
           "port": "Port"
@@ -42,11 +42,13 @@
           "scan_interval": "Update interval (seconds)",
           "temperature_limit": "Card temperature alarm (°C)",
           "card_entities": "Create entities for every card",
-          "rescan": "Scan the outputs again"
+          "rescan": "Scan the outputs again",
+          "allow_control": "Allow control (input, freeze, black, brightness…)"
         },
         "data_description": {
           "card_entities": "Turn off on very large screens to keep only the summary entities per output.",
-          "rescan": "Use after you add, remove or re-cable cabinets. The cards found become the new expected layout."
+          "rescan": "Use after you add, remove or re-cable cabinets. The cards found become the new expected layout.",
+          "allow_control": "Creates entities that change the controller's settings. Off by default, so nothing can be written to the controller until you turn this on."
         }
       }
     },
@@ -97,11 +99,55 @@
       "card_voltage": {
         "name": "Card {card} voltage"
       }
+    },
+    "select": {
+      "input_source": {
+        "name": "Input source",
+        "state": {
+          "dvi": "DVI",
+          "hdmi": "HDMI",
+          "vga1": "VGA 1",
+          "vga2": "VGA 2",
+          "cvbs1": "CVBS 1",
+          "cvbs2": "CVBS 2",
+          "sdi": "SDI",
+          "dp": "DisplayPort"
+        }
+      },
+      "display_mode": {
+        "name": "Display mode",
+        "state": {
+          "normal": "Normal",
+          "freeze": "Frozen",
+          "black": "Black"
+        }
+      }
+    },
+    "switch": {
+      "freeze": {
+        "name": "Freeze image"
+      },
+      "black": {
+        "name": "Black out"
+      },
+      "pip": {
+        "name": "Picture in picture"
+      },
+      "panel_lock": {
+        "name": "Lock front panel"
+      }
+    },
+    "number": {
+      "brightness": {
+        "name": "Brightness"
+      }
     }
   },
   "exceptions": {
     "cannot_connect": {
       "message": "Can't read the controller: {error}"
-    }
+    },
+    "control_disabled": "Control is turned off. Turn on \"Allow control\" in the integration's options.",
+    "control_failed": "The controller did not accept the command: {error}"
   }
 }

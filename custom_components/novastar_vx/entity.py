@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_TEMP_LIMIT, DEFAULT_TEMP_LIMIT, DOMAIN
-from .coordinator import NovaCoordinator
+from .coordinator import NovaConfigEntry, NovaCoordinator
 from .protocol import CardStatus, model_name
 
 
@@ -93,7 +96,40 @@ def is_on_backup(coord: NovaCoordinator, main: int) -> bool | None:
     return (state & 0x7F) != 0
 
 
+def control_allowed(hass: HomeAssistant, entry: NovaConfigEntry, platform: Platform) -> bool:
+    """Whether a control platform should create its entities.
+
+    When control is off, entities left over from when it was on are removed.
+    """
+    if entry.runtime_data.allow_control:
+        return True
+    registry = er.async_get(hass)
+    for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
+        if entity.domain == platform:
+            registry.async_remove(entity.entity_id)
+    return False
+
+
 class NovaEntity(CoordinatorEntity[NovaCoordinator]):
     """Base entity."""
 
     _attr_has_entity_name = True
+
+
+class NovaControlEntity(NovaEntity):
+    """Base for entities that write to the controller.
+
+    They show the last value read from the controller; it can't be known
+    (and the entity shows as unknown) while the controller doesn't answer.
+    """
+
+    def __init__(self, coord: NovaCoordinator, key: str) -> None:
+        super().__init__(coord)
+        self._attr_translation_key = key
+        self._attr_unique_id = f"{coord.config_entry.entry_id}_{key}"
+        self._attr_device_info = controller_device(coord)
+
+    @property
+    def _control(self):
+        """The control registers last read, or None."""
+        return self.coordinator.data.control

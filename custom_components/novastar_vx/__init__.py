@@ -19,7 +19,14 @@ from .coordinator import NovaConfigEntry, NovaCoordinator
 from .entity import controller_device
 from .protocol import NovaClient
 
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR]
+# The control platforms are always forwarded; they add nothing unless control is allowed.
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.NUMBER,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.SWITCH,
+]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 CARD_URL = f"/{DOMAIN}/novastar-screen-card.js"
 

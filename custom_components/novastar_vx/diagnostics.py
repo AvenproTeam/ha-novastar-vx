@@ -30,6 +30,12 @@ async def async_get_config_entry_diagnostics(
     if data is None:
         return result
     cards = list(data.cards.values())
+    if data.control is not None:
+        # Raw register values: they show what a given firmware answers to the control registers.
+        result["control_registers"] = {
+            name: f"0x{value:02X}" if value is not None else None
+            for name, value in vars(data.control).items()
+        }
     result |= {
         "model_id": f"0x{data.model_id:04X}",
         "redundancy": [{"main": m + 1, "backup": b + 1} for m, b in data.redundancy],

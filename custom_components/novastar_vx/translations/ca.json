@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Afegeix un controlador NovaStar",
-        "description": "Introdueix l'adreça IP del controlador (per exemple un VX1000). Home Assistant es connecta al seu port de control i busca targetes receptores a cada sortida. Les targetes trobades passen a ser la distribució esperada, de manera que qualsevol targeta que deixi de respondre es marca com a problema. Mai s'escriu res al controlador.",
+        "description": "Introdueix l'adreça IP del controlador (per exemple un VX1000). Home Assistant es connecta al seu port de control i busca targetes receptores a cada sortida. Les targetes trobades passen a ser la distribució esperada, de manera que qualsevol targeta que deixi de respondre es marca com a problema. No s'escriu res al controlador tret que activis el control a les opcions.",
         "data": {
           "host": "Amfitrió",
           "port": "Port"
@@ -14,7 +14,7 @@
       },
       "reconfigure": {
         "title": "Canvia l'adreça del controlador",
-        "description": "Introdueix l'adreça IP del controlador (per exemple un VX1000). Home Assistant es connecta al seu port de control i busca targetes receptores a cada sortida. Les targetes trobades passen a ser la distribució esperada, de manera que qualsevol targeta que deixi de respondre es marca com a problema. Mai s'escriu res al controlador.",
+        "description": "Introdueix l'adreça IP del controlador (per exemple un VX1000). Home Assistant es connecta al seu port de control i busca targetes receptores a cada sortida. Les targetes trobades passen a ser la distribució esperada, de manera que qualsevol targeta que deixi de respondre es marca com a problema. No s'escriu res al controlador tret que activis el control a les opcions.",
         "data": {
           "host": "Amfitrió",
           "port": "Port"
@@ -42,11 +42,13 @@
           "scan_interval": "Interval d'actualització (segons)",
           "temperature_limit": "Alarma de temperatura de targeta (°C)",
           "card_entities": "Crea entitats per a cada targeta",
-          "rescan": "Torna a buscar a les sortides"
+          "rescan": "Torna a buscar a les sortides",
+          "allow_control": "Permetre control (entrada, congelar, negre, brillantor…)"
         },
         "data_description": {
           "card_entities": "Desactiva-ho en pantalles molt grans per deixar només les entitats de resum per sortida.",
-          "rescan": "Fes-ho servir després d'afegir, treure o recablejar cabines. Les targetes trobades passen a ser la nova distribució esperada."
+          "rescan": "Fes-ho servir després d'afegir, treure o recablejar cabines. Les targetes trobades passen a ser la nova distribució esperada.",
+          "allow_control": "Crea entitats que canvien la configuració del controlador. Desactivat per defecte: no es pot escriure res al controlador fins que ho activis."
         }
       }
     },
@@ -97,11 +99,55 @@
       "card_voltage": {
         "name": "Tensió targeta {card}"
       }
+    },
+    "select": {
+      "input_source": {
+        "name": "Entrada de vídeo",
+        "state": {
+          "dvi": "DVI",
+          "hdmi": "HDMI",
+          "vga1": "VGA 1",
+          "vga2": "VGA 2",
+          "cvbs1": "CVBS 1",
+          "cvbs2": "CVBS 2",
+          "sdi": "SDI",
+          "dp": "DisplayPort"
+        }
+      },
+      "display_mode": {
+        "name": "Mode d'imatge",
+        "state": {
+          "normal": "Normal",
+          "freeze": "Congelada",
+          "black": "Negre"
+        }
+      }
+    },
+    "switch": {
+      "freeze": {
+        "name": "Congelar imatge"
+      },
+      "black": {
+        "name": "Passar a negre"
+      },
+      "pip": {
+        "name": "Imatge en imatge"
+      },
+      "panel_lock": {
+        "name": "Bloquejar panell frontal"
+      }
+    },
+    "number": {
+      "brightness": {
+        "name": "Brillantor"
+      }
     }
   },
   "exceptions": {
     "cannot_connect": {
       "message": "No es pot llegir el controlador: {error}"
-    }
+    },
+    "control_disabled": "El control està desactivat. Activa «Permetre control» a les opcions de la integració.",
+    "control_failed": "El controlador no ha acceptat l'ordre: {error}"
   }
 }

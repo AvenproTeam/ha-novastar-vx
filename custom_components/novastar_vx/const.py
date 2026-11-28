@@ -8,7 +8,9 @@ CONF_SCAN_INTERVAL = "scan_interval"
 CONF_TEMP_LIMIT = "temperature_limit"
 CONF_CARD_ENTITIES = "card_entities"
 CONF_RESCAN = "rescan"
+CONF_ALLOW_CONTROL = "allow_control"
 
 DEFAULT_SCAN_INTERVAL = 30
 DEFAULT_TEMP_LIMIT = 70
 DEFAULT_CARD_ENTITIES = True
+DEFAULT_ALLOW_CONTROL = False

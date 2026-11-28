@@ -10,11 +10,13 @@ from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import callback
 
 from .const import (
+    CONF_ALLOW_CONTROL,
     CONF_CARD_ENTITIES,
     CONF_LAYOUT,
     CONF_RESCAN,
     CONF_SCAN_INTERVAL,
     CONF_TEMP_LIMIT,
+    DEFAULT_ALLOW_CONTROL,
     DEFAULT_CARD_ENTITIES,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
@@ -145,6 +147,10 @@ class NovaOptionsFlow(OptionsFlow):
                 vol.Required(
                     CONF_CARD_ENTITIES,
                     default=opts.get(CONF_CARD_ENTITIES, DEFAULT_CARD_ENTITIES),
+                ): bool,
+                vol.Required(
+                    CONF_ALLOW_CONTROL,
+                    default=opts.get(CONF_ALLOW_CONTROL, DEFAULT_ALLOW_CONTROL),
                 ): bool,
                 vol.Required(CONF_RESCAN, default=False): bool,
             }

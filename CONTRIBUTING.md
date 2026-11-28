@@ -36,7 +36,8 @@ To try your changes in a real Home Assistant, copy `custom_components/novastar_v
 | `coordinator.py` | Polls the controller. |
 | `config_flow.py` | Setup, reconfigure and options screens. |
 | `entity.py` | Devices and the shared status logic (what counts as a problem or a warning). |
-| `sensor.py`, `binary_sensor.py` | Entities. |
+| `sensor.py`, `binary_sensor.py` | Monitoring entities. |
+| `select.py`, `switch.py`, `number.py` | Control entities. Created only when "Allow control" is on. |
 | `websocket.py` | Feeds the screen map card. |
 | `frontend/novastar-screen-card.js` | The screen map card. Plain JavaScript, no build step. |
 | `translations/` | UI text. Add a `<language>.json` copied from `en.json` to add a language. |
@@ -48,7 +49,7 @@ To try your changes in a real Home Assistant, copy `custom_components/novastar_v
 - Add or update tests for what you change.
 - Run `ruff check` and `ruff format` before you push.
 - If you add a text the user sees, add it to every file in `translations/`.
-- **Never write to the controller.** The integration must stay read-only.
+- **Monitoring must stay read-only.** Only the control entities (`select.py`, `switch.py`, `number.py`) may write, and only when the user turned on "Allow control". Never write from a poll, a setup step or a test against a real device.
 
 ## The protocol in short
 

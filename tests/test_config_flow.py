@@ -6,6 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.novastar_vx.const import (
+    CONF_ALLOW_CONTROL,
     CONF_CARD_ENTITIES,
     CONF_LAYOUT,
     CONF_RESCAN,
@@ -62,14 +63,47 @@ async def test_options_and_rescan(hass: HomeAssistant, fake_controller: FakeCont
     result = await hass.config_entries.options.async_init(entry.entry_id)
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
-        {CONF_SCAN_INTERVAL: 60, CONF_TEMP_LIMIT: 55, CONF_CARD_ENTITIES: True, CONF_RESCAN: True},
+        {
+            CONF_SCAN_INTERVAL: 60,
+            CONF_TEMP_LIMIT: 55,
+            CONF_CARD_ENTITIES: True,
+            CONF_ALLOW_CONTROL: False,
+            CONF_RESCAN: True,
+        },
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
-    assert entry.options == {CONF_SCAN_INTERVAL: 60, CONF_TEMP_LIMIT: 55, CONF_CARD_ENTITIES: True}
+    assert entry.options == {
+        CONF_SCAN_INTERVAL: 60,
+        CONF_TEMP_LIMIT: 55,
+        CONF_CARD_ENTITIES: True,
+        CONF_ALLOW_CONTROL: False,
+    }
     assert entry.data[CONF_LAYOUT] == {"0": 3, "1": 5}
     assert entry.runtime_data.update_interval.total_seconds() == 60
     assert hass.states.get("sensor.novastar_vx1000_output_2_card_5_voltage").state == "4.0"
+
+
+async def test_allow_control_option(hass: HomeAssistant, fake_controller: FakeController) -> None:
+    entry = (await _add(hass, fake_controller.port))["result"]
+    await hass.async_block_till_done()
+    assert hass.states.get("select.novastar_vx1000_input_source") is None
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            CONF_SCAN_INTERVAL: 30,
+            CONF_TEMP_LIMIT: 70,
+            CONF_CARD_ENTITIES: True,
+            CONF_ALLOW_CONTROL: True,
+            CONF_RESCAN: False,
+        },
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert hass.states.get("select.novastar_vx1000_input_source").state == "dvi"
+    assert fake_controller.writes == []
 
 
 async def test_reconfigure(hass: HomeAssistant, fake_controller: FakeController) -> None:
