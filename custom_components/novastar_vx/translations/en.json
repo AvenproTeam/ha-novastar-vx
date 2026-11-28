@@ -147,7 +147,11 @@
     "cannot_connect": {
       "message": "Can't read the controller: {error}"
     },
-    "control_disabled": "Control is turned off. Turn on \"Allow control\" in the integration's options.",
-    "control_failed": "The controller did not accept the command: {error}"
+    "control_disabled": {
+      "message": "Control is turned off. Turn on \"Allow control\" in the integration's options."
+    },
+    "control_failed": {
+      "message": "The controller did not accept the command: {error}"
+    }
   }
 }

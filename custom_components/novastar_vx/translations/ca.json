@@ -147,7 +147,11 @@
     "cannot_connect": {
       "message": "No es pot llegir el controlador: {error}"
     },
-    "control_disabled": "El control està desactivat. Activa «Permetre control» a les opcions de la integració.",
-    "control_failed": "El controlador no ha acceptat l'ordre: {error}"
+    "control_disabled": {
+      "message": "El control està desactivat. Activa «Permetre control» a les opcions de la integració."
+    },
+    "control_failed": {
+      "message": "El controlador no ha acceptat l'ordre: {error}"
+    }
   }
 }
