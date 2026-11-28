@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2 – 2026-11-28
+
+- Options screen: clearer labels, a description under every option, and "Create control entities" for the control switch.
+- Wide NovaStar logo (`logo.png`) added to the brand images.
+
 ## 1.1.1 – 2026-11-28
 
 - Fix the structure of the error messages in the translations, so control errors show correctly and Hassfest passes.

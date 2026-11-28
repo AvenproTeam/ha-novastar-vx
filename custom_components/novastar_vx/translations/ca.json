@@ -37,18 +37,20 @@
     "step": {
       "init": {
         "title": "Opcions",
-        "description": "Cada quant consultar, quan una targeta està massa calenta i quines entitats crear.",
+        "description": "Tria com es monitoritza la pantalla i quines entitats es creen.",
         "data": {
           "scan_interval": "Interval d'actualització (segons)",
           "temperature_limit": "Alarma de temperatura de targeta (°C)",
           "card_entities": "Crea entitats per a cada targeta",
-          "rescan": "Torna a buscar a les sortides",
-          "allow_control": "Permetre control (entrada, congelar, negre, brillantor…)"
+          "allow_control": "Crea entitats de control",
+          "rescan": "Torna a buscar a les sortides"
         },
         "data_description": {
+          "scan_interval": "Cada quant es consulta el controlador. 30 s va bé en gairebé totes les pantalles; les molt grans poden preferir 60 s.",
+          "temperature_limit": "Una targeta amb aquesta temperatura o més es marca com a problema. Es posa en groc 10 °C abans.",
           "card_entities": "Desactiva-ho en pantalles molt grans per deixar només les entitats de resum per sortida.",
-          "rescan": "Fes-ho servir després d'afegir, treure o recablejar cabines. Les targetes trobades passen a ser la nova distribució esperada.",
-          "allow_control": "Crea entitats que canvien la configuració del controlador. Desactivat per defecte: no es pot escriure res al controlador fins que ho activis."
+          "allow_control": "Afegeix entrada, mode d'imatge, congelar, passar a negre, brillantor, imatge en imatge i bloqueig del panell. Desactivat per defecte: mentre ho estigui, mai s'escriu res al controlador. Experimental, encara sense provar en una VX1000 real.",
+          "rescan": "Fes-ho servir després d'afegir, treure o recablejar cabines. Les targetes trobades passen a ser la nova distribució esperada."
         }
       }
     },

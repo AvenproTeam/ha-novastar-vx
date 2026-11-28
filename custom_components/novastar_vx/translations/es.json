@@ -37,18 +37,20 @@
     "step": {
       "init": {
         "title": "Opciones",
-        "description": "Cada cuánto consultar, cuándo una tarjeta está demasiado caliente y qué entidades crear.",
+        "description": "Elige cómo se monitoriza la pantalla y qué entidades se crean.",
         "data": {
           "scan_interval": "Intervalo de actualización (segundos)",
           "temperature_limit": "Alarma de temperatura de tarjeta (°C)",
           "card_entities": "Crear entidades para cada tarjeta",
-          "rescan": "Volver a buscar en las salidas",
-          "allow_control": "Permitir control (entrada, congelar, negro, brillo…)"
+          "allow_control": "Crear entidades de control",
+          "rescan": "Volver a buscar en las salidas"
         },
         "data_description": {
+          "scan_interval": "Cada cuánto se consulta el controlador. 30 s va bien en casi todas las pantallas; las muy grandes pueden preferir 60 s.",
+          "temperature_limit": "Una tarjeta con esta temperatura o más se marca como problema. Se pone en amarillo 10 °C antes.",
           "card_entities": "Desactívalo en pantallas muy grandes para dejar solo las entidades de resumen por salida.",
-          "rescan": "Úsalo después de añadir, quitar o recablear cabinas. Las tarjetas encontradas pasan a ser la nueva distribución esperada.",
-          "allow_control": "Crea entidades que cambian la configuración del controlador. Desactivado por defecto: no se puede escribir nada en el controlador hasta que lo actives."
+          "allow_control": "Añade entrada, modo de imagen, congelar, pasar a negro, brillo, imagen en imagen y bloqueo del panel. Desactivado por defecto: mientras lo esté, nunca se escribe nada en el controlador. Experimental, aún sin probar en una VX1000 real.",
+          "rescan": "Úsalo después de añadir, quitar o recablear cabinas. Las tarjetas encontradas pasan a ser la nueva distribución esperada."
         }
       }
     },

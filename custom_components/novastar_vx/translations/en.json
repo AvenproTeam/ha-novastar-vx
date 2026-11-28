@@ -37,18 +37,20 @@
     "step": {
       "init": {
         "title": "Options",
-        "description": "How often to poll, when a card counts as too hot, and which entities to create.",
+        "description": "Choose how the screen is monitored and which entities are created.",
         "data": {
           "scan_interval": "Update interval (seconds)",
           "temperature_limit": "Card temperature alarm (°C)",
           "card_entities": "Create entities for every card",
-          "rescan": "Scan the outputs again",
-          "allow_control": "Allow control (input, freeze, black, brightness…)"
+          "allow_control": "Create control entities",
+          "rescan": "Scan the outputs again"
         },
         "data_description": {
+          "scan_interval": "How often the controller is read. 30 s suits most screens; very large walls may prefer 60 s.",
+          "temperature_limit": "A card at or above this temperature is reported as a problem. It turns yellow 10 °C earlier.",
           "card_entities": "Turn off on very large screens to keep only the summary entities per output.",
-          "rescan": "Use after you add, remove or re-cable cabinets. The cards found become the new expected layout.",
-          "allow_control": "Creates entities that change the controller's settings. Off by default, so nothing can be written to the controller until you turn this on."
+          "allow_control": "Adds input source, display mode, freeze, black out, brightness, picture in picture and front-panel lock. Off by default: while it is off, nothing is ever written to the controller. Experimental, not yet tested on a real VX1000.",
+          "rescan": "Use after you add, remove or re-cable cabinets. The cards found become the new expected layout."
         }
       }
     },
